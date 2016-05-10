@@ -2,14 +2,14 @@
 #include <RcppArmadillo.h>
 
 // [[Rcpp::export]]
-arma::mat stick_breaking(double A=1, double mu_0=2, double K=100, double v_0=1, double u_0=1, double tol=0.01){
+arma::mat stick_breaking_cpp(double alpha=1, double mu_0=2, double K=100, double v_0=1, double u_0=1, double tol=0.01){
   arma::vec pis = arma::zeros(1);  arma::vec betas = arma::zeros(1);
-  double new_beta = Rcpp::rbeta(1,1,A)[0];
+  double new_beta = Rcpp::rbeta(1,1,alpha)[0];
   betas.tail(1) = new_beta;  pis.tail(1) = new_beta;
   double s=0;
   while ( sum(pis) < (1.0-tol) ){
     s = prod(1-betas);
-    new_beta = Rcpp::rbeta(1,1,A)[0];
+    new_beta = Rcpp::rbeta(1,1,alpha)[0];
     betas.resize( betas.n_elem+1 );
     betas.tail(1) += new_beta;
     pis.resize( pis.n_elem+1 );
@@ -25,9 +25,9 @@ arma::mat stick_breaking(double A=1, double mu_0=2, double K=100, double v_0=1, 
 }
 
 // [[Rcpp::export]]
-Rcpp::List generator_cpp(int num_samples=5, double A=1, double mu_0=2, double K=100, double v_0=1, double u_0=1, double tol=0.01){
+Rcpp::List generator_cpp(int num_samples=5, double alpha=1, double mu_0=2, double K=100, double v_0=1, double u_0=1, double tol=0.01){
   arma::vec ys = arma::zeros(num_samples);
-  arma::mat theta = stick_breaking(A, mu_0, K, v_0, u_0, tol);
+  arma::mat theta = stick_breaking_cpp(alpha, mu_0, K, v_0, u_0, tol);
   arma::vec pis = theta.col(0);
   arma::vec cum_pis = cumsum(pis);
   double rnd;  int ind;
