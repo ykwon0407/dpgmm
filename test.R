@@ -50,18 +50,17 @@ plot(data2, col=C2)
 #--------------------------------------------------------------------
 # Algorithm 2
 #--------------------------------------------------------------------
-mat_algo2_model1 <- algo2_cpp(data1, C1, alpha=1.0, K=1.0, mu_0= mean(data1), v_0=0.2, u_0=1.0)
-mat_algo2_model2 <- algo2_cpp(data2, C2, alpha=1.0, K=1.0, mu_0= mean(data2), v_0=0.2, u_0=1.0)
+mat_algo2_model1 <- algo2_cpp(data1, C1, mu_0= mean(data1))
+mat_algo2_model2 <- algo2_cpp(data2, C2, mu_0= mean(data2), K=1.0, v_0 = 100.0)
 
-plot(data1, col=as.factor(mat_algo2_model1[1,1:200]))
-plot(data2, col=as.factor(mat_algo2_model2[1,1:200]))
-as.factor(mat_algo2_model2[1,1:200])
+plot(data1, col=as.factor(mat_algo2_model1[100,1:200]))
+plot(data2, col=as.factor(mat_algo2_model2[100,1:200]))
 
 #--------------------------------------------------------------------
 # Algorithm 4
 #--------------------------------------------------------------------
-mat_algo4_model1 <- algo4_cpp(data1, C1, alpha=0.1, K=1.0, mu_0= mean(data1))
-mat_algo4_model2 <- algo4_cpp(data2, C2, alpha=0.1, K=1.0, mu_0= mean(data2))
+mat_algo4_model1 <- algo4_cpp(data1, C1, mu_0= mean(data1))
+mat_algo4_model2 <- algo4_cpp(data2, C2, mu_0= mean(data2), K=1.0, v_0 = 100.0)
 
 plot(data1, col=as.factor(mat_algo4_model1[1,1:200]))
 plot(data2, col=as.factor(mat_algo4_model2[1,1:200]))
@@ -70,8 +69,8 @@ as.factor(mat_algo4_model2[1,1:200])
 #--------------------------------------------------------------------
 # Algorithm 8
 #--------------------------------------------------------------------
-mat_algo8_model1 <- algo8_cpp(data1, C1, alpha=0.1, K=1.0, mu_0= mean(data1))
-mat_algo8_model2 <- algo8_cpp(data2, C2, alpha=0.1, K=3.0, mu_0= mean(data2), u_0 = 0.7)
+mat_algo8_model1 <- algo8_cpp(data1, C1, mu_0= mean(data1))
+mat_algo8_model2 <- algo8_cpp(data2, C2, mu_0= mean(data2))
 
 plot(data1, col=as.factor(mat_algo8_model1[1,1:200]))
 plot(data2, col=as.factor(mat_algo8_model2[1,1:200]))
@@ -80,8 +79,8 @@ as.factor(mat_algo8_model2[1,1:200])
 #--------------------------------------------------------------------
 # Sliced algorithm
 #--------------------------------------------------------------------
-mat_slice_model1 <- slice_cpp(data1, C1, alpha=0.1, K=1.0, mu_0= mean(data1))
-mat_slice_model2 <- slice_cpp(data2, C2, alpha=0.1, K=3.0, mu_0= mean(data2), u_0 = 0.7)
+mat_slice_model1 <- slice_cpp(data1, C1, mu_0= mean(data1))
+mat_slice_model2 <- slice_cpp(data2, C2, mu_0= mean(data2))
 
 plot(data1, col=as.factor(mat_slice_model1[1,1:200]))
 plot(data2, col=as.factor(mat_slice_model2[1,1:200]))
@@ -90,8 +89,8 @@ as.factor(mat_slice_model2[1,1:200])
 #--------------------------------------------------------------------
 # Variational inference algorithm
 #--------------------------------------------------------------------
-mat_vari_model1 <- algo_var_cpp(data1, C1, alpha=0.1, K=1.0, mu_0= mean(data1))
-mat_vari_model2 <- algo_var_cpp(data2, C2, alpha=0.1, K=3.0, mu_0= mean(data2), u_0 = 0.7)
+mat_vari_model1 <- algo_var_cpp(data1, C1, mu_0= mean(data1))
+mat_vari_model2 <- algo_var_cpp(data2, C2, mu_0= mean(data2))
 
 plot(data1, col=as.factor(mat_vari_model1[1,1:200]))
 plot(data2, col=as.factor(mat_vari_model2[1,1:200]))

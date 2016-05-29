@@ -7,8 +7,8 @@ using namespace std;
 
 // [[Rcpp::export]]
 arma::mat algo2_cpp(arma::vec ys, arma::vec C,
-                    int max_iter = 115000, int thining = 1000, int burn_in = 15000,
-                    double alpha=1.0, double mu_0=2.0, double K=1.0, double v_0=1.0, double u_0=1.0){
+                    int max_iter = 11500, int thining = 100, int burn_in = 1500,
+                    double alpha=1.0, double mu_0=2.0, double K=2.0, double v_0=0.2, double u_0=1.0){
   int count = 1; int n = ys.n_elem;
   int max_count = (max_iter-burn_in)/thining;
   double beta = (v_0*u_0)/2;
