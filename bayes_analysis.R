@@ -5,7 +5,7 @@
 # Short descriptions:
 # The following script compares the Dirichlet Process Mixture Model
 # algorithms discussed in the Advanced Bayesian lectures. I followed 
-# the papers Neal(2000), , and Biel et al.(2006).
+# the papers Neal(2000) and lecture notes.
 # 
 #--------------------------------------------------------------------
 
