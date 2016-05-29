@@ -6,9 +6,9 @@
 using namespace std;
 
 // [[Rcpp::export]]
-arma::mat slice_cpp(arma::vec ys, arma::vec C,
+arma::mat var_cpp(arma::vec ys, arma::vec C,
                     int max_iter = 11500, int thining = 100, int burn_in = 1500,
-                    double alpha=1.0, double mu_0=2.0, double K=2.0, double v_0=0.2, double u_0=1.0, double tol = 0.05){
+                    double alpha=1.0, double mu_0=2.0, double K=2.0, double v_0=0.2, double u_0=1.0, int T = 8){
   int count = 1; int n = ys.n_elem;
   int max_count = (max_iter-burn_in)/thining;
   double beta = (v_0*u_0)/2;
@@ -17,30 +17,26 @@ arma::mat slice_cpp(arma::vec ys, arma::vec C,
   
   // initialize phi's from base measure. the number of elements in state cannot be larger than n.
   // initializer v and u
-  arma::vec v_list = arma::zeros(n);
-  arma::vec w_list = arma::zeros(n);
-  double var=0; arma::vec u_list = arma::zeros(n);
+  double var=0;
   for( int i=0 ; i < n ; ++i ){ 
     beta = (v_0*u_0)/2;
     phis(i,1) = R::rgamma(v_0/2, 1/beta ); //tau_i
     var = 1/(K*phis(i,1));
     phis(i,0) = R::rnorm(mu_0, pow((var),0.5)); //mu_i 
-    
+  }
+  arma::vec v_list = arma::zeros(T);
+  arma::vec coef = arma::zeros(T);
+  for( int i=0 ; i < T ; ++i ){ 
     v_list(i) = R::rbeta(1, alpha); // v_i
-    if(C[i]==1){
-      u_list[i] = Rcpp::runif(1,0, v_list[(C[i]-1)])[0]; // u_i
-    }else{
-      u_list[i] = Rcpp::runif(1,0, (prod(1-v_list(arma::span(0,(C[i]-2))))*v_list[(C[i]-1)]))[0]; // u_i
-    }
   }
   
   arma::uvec ni, class_index;  arma::vec uc, class_ys;
   arma::vec prob_class; arma::vec cw;
   cout<< "Iteration start!!" <<endl;
   
-  double rnd, v_lower, v_upper, temp, new_v;
-  int class_ind, posterior_index, M; double w, thre;
-  bool is_zero=false; int zero_class = 0;
+  double rnd;
+  int class_ind, posterior_index, M;
+  bool is_zero=false; int zero_class = 0; double a, b;
   // Iteration
   while(true){
     // iteration criteria
@@ -48,95 +44,68 @@ arma::mat slice_cpp(arma::vec ys, arma::vec C,
       break;
     }
     
-    
-    uc = unique(C); M=uc.n_elem;
+    uc = unique(C); ni = hist(C, unique(C)); M=uc.n_elem;
+    coef = arma::zeros(T);
     // update V
-    for(int j=0; j < n ; ++j){
-      if( j == M ){
-        break;
-      }
-      
-      class_index = find(C == (j+1));
-      if( j == 0){
-        v_lower = max(u_list(class_index)); 
+    for(int j=0; j < T ; ++j){
+      if(j < M){
+        a = ni(j)+1; 
       }else{
-        v_lower = max(u_list(class_index))/prod(1-v_list(arma::span(0,(j-1))));
-      }
-      if(v_lower >= 1){
-        v_lower = 1;
+        a = 1;
       }
       
-      class_index = find(C > (j+1)); v_upper = 1;
-      for(int k=0; k < class_index.n_elem ; ++k){
-        w = prod(1-v_list(arma::span(0,(C[class_index(k)]-2))))*v_list[(C[class_index(k)]-1)]/(1-v_list[j]);
-        temp = 1-u_list[class_index(k)]/w;
-        if((v_upper >= temp) & (temp>=v_lower)){
-          v_upper = temp;
-        }
-      }
-      
-      if( v_lower == 1){
-        // do nothing
+      if( j == 0 ){
+        b = n-a + alpha;  
+      }else if( j < M){
+        b = n-sum(ni(arma::span(0,j))) + alpha;
       }else{
-        while(true){
-          new_v = R::rbeta(1, alpha);
-          if((new_v>=v_lower)&(new_v<=v_upper)){
-            v_list[j] = new_v;
-            if(j==0){
-              w_list[j] = new_v;
-            }else{
-              w_list[j] = new_v*prod(1-v_list(arma::span(0,(j-1))));  
-            }
-            break;
-          }
-        }
+        b = alpha;
       }
-    }
-    
-    // update U
-    for(int j=0; j < n; ++j){
-      u_list[j] = Rcpp::runif(1, 0, w_list[(C[j]-1)])[0]; // u_i
+      
+      v_list(j) = R::rbeta(a, b); // v_i
+      if(j==0){
+        coef(j) = 1;
+      }else{
+        coef(j) = coef((j-1))*b/(a+b);
+      }
     }
     
     // update C
-    cw = cumsum(w_list);  thre = 1+max(-u_list);
     for(int j=0; j < n; ++j){
+      uc = unique(C); ni = hist(C, unique(C)); M=uc.n_elem;
       is_zero=false;
-      // setting n_i 
-      uc = unique(C); ni =  hist(C, uc); // order by class
-      ni[(C[j]-1)] -= 1;
-      
-      // if c_j is associated with no other obsevation then initialize
-      if(ni[(C[j]-1)] == 0){
+      // if c_j is associated with no other obsevation
+      if(ni[(C[j]-1)] == 1){
         is_zero=true;
         zero_class = C[j];
       }
       
-      M = 1;
-      for( int k=0; k < n; ++k ){
-        if((k>=uc.n_elem)|(thre < cw[k])){
-          break;
-        }else{
-          M += 1;
-        }
-      }
-      prob_class = arma::zeros(M);
-      
       // calculate probability for existing class
-      for( int k = 0; k < M; ++k ){
+      prob_class = arma::zeros(T);
+      for( int k = 0; k < T; ++k ){
+        if(k < M){
+          a = ni(k)+1; 
+        }else{
+          a = 1;
+        }
+        
+        if( k == 0 ){
+          b = n-a + alpha;  
+        }else if(k < M){
+          b = n-sum(ni(arma::span(0,k))) + alpha;
+        }else{
+          b = alpha;
+        }
+        
         var = 1/phis(k, 1);
-        prob_class(k) = R::dnorm(ys[j], phis(k, 0), pow((var),0.5), false); //likelihood  
+        prob_class(k) = (a/(a+b))*coef[k]*R::dnorm(ys[j], phis(k, 0), pow((var),0.5), false); //likelihood  
       }
-      /*
-      class_index = find(u_list(j) > w_list(arma::span(0,(M-1))));
-      prob_class(class_index) = arma::zeros(class_index.n_elem);
-      */
       prob_class = prob_class/sum(prob_class); 
       
       // class sampling
       rnd = Rcpp::runif(1)[0];
       arma::vec cum_class = cumsum(prob_class); class_ind = 1;
-      for( int k=0; k < M; ++k ){
+      for( int k=0; k < T; ++k ){
         if( rnd < cum_class[k]){
           break;
         }else{
@@ -146,6 +115,17 @@ arma::mat slice_cpp(arma::vec ys, arma::vec C,
       
       // class update
       C[j] = class_ind;
+      
+      if(class_ind>uc.n_elem){
+        C[j] = uc.n_elem+1;
+        phis((uc.n_elem),1)=phis((class_ind-1),1);
+        phis((uc.n_elem),0)=phis((class_ind-1),0);
+        // new phi's
+        beta = (v_0*u_0)/2;
+        phis((class_ind-1),1)=R::rgamma(v_0/2, 1/beta ); //tau_i
+        var = 1/(K*phis((n-1),1));
+        phis((class_ind-1),0)=R::rnorm(mu_0, pow((var),0.5)); //mu_i
+      }
       
       // standardize C
       if(is_zero & (class_ind != zero_class)){
