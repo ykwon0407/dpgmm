@@ -6,7 +6,7 @@
 using namespace std;
 
 // [[Rcpp::export]]
-arma::mat var_cpp(arma::vec ys, arma::vec C,
+arma::mat vari_cpp(arma::vec ys, arma::vec C,
                     int max_iter = 11500, int thining = 100, int burn_in = 1500,
                     double alpha=1.0, double mu_0=2.0, double K=2.0, double v_0=0.2, double u_0=1.0, int T = 8){
   int count = 1; int n = ys.n_elem;
