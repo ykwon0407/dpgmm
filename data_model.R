@@ -1,3 +1,7 @@
+#-------------------------------------------------
+# Data generation
+#-------------------------------------------------
+
 data_model1 <- function(n=5){
   rnd = runif(n) 
   data = (rnd <= 0.2)*rnorm(n, mean =0, sd=1) + (rnd > 0.2)*rnorm(n, mean =10, sd=2)
@@ -17,4 +21,3 @@ data_model2 <- function(n=5){
   data = colSums(rnd*norm_mat)
   return(data)
 }
-
